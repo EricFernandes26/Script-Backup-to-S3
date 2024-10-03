@@ -27,12 +27,12 @@ Este repositório contém três scripts PowerShell para realizar backups e resta
 │   ├── Full/                 # Armazena os backups completos
 │   ├── Diferencial/          # Armazena os backups diferenciais
 │   ├── Logs/                 # Armazena os backups de logs
-│   ├── Restore/              # Utilizado para armazenar backups baixados para restauração
+│   ├── restore/              # Utilizado para armazenar backups baixados para restauração
 ├── Script/
 │   │   ├── backupfull.ps1       # Script de backup completo
 │   │   ├── backupdiff.ps1       # Script de backup diferencial
 │   │   ├── backuplog.ps1        # Script de backup de logs
-│   ├── Script de Restore/
+│   ├── Script de restore/
 │   │   ├── downloadbkp.ps1      # Script para baixar os backups do S3
 │   │   ├── restorebkp.ps1       # Script para restaurar os backups
 ```
