@@ -109,7 +109,7 @@ Baixa os backups mais recentes (Full, Diferencial e Logs) do S3 para o diretóri
 Restaura o banco de dados usando o backup completo, diferencial e os logs de transação baixados previamente.
 Uso:
 ```bash
-.\downloadbkp.ps1
+.\restorebkp.ps1
 ```
 * Verifica se o banco de dados já existe, remove-o e, em seguida, restaura o backup completo.
 * Aplica o backup diferencial mais recente e, por fim, restaura os backups de log na ordem correta
