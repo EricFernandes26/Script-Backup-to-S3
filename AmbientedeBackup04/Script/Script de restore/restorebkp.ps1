@@ -1,7 +1,26 @@
-# Definir parâmetros para restauração
-$databaseName = "applogs"                                   # Nome do banco de dados a ser restaurado
-$localRestoreDir = "C:\AmbientedeBackup04\restore"           # Diretório local onde os backups foram baixados
-$instanceName = "localhost"                                  # Nome da instância do SQL Server
+# Lista de bancos de dados para restaurar
+$bancosDados = @("AdventureWorks2022", "applogs", "hades", "matricula")
+
+# Perguntar ao usuário qual banco de dados ele deseja restaurar
+Write-Host "Escolha um banco de dados para restaurar:"
+for ($i = 0; $i -lt $bancosDados.Count; $i++) {
+    Write-Host "$($i+1). $($bancosDados[$i])"
+}
+
+$escolha = Read-Host "Digite o numero correspondente ao banco de dados"
+
+# Validar escolha do usuário
+if ($escolha -lt 1 -or $escolha -gt $bancosDados.Count) {
+    Write-Host "Escolha inválida. Saindo..."
+    exit
+}
+
+$databaseName = $bancosDados[$escolha - 1]
+Write-Host "Banco de dados selecionado: $databaseName"
+
+# Definir diretório local para os backups baixados
+$localRestoreDir = "C:\AmbientedeBackup04\restore"
+$instanceName = "localhost"
 
 # Verificar se o diretório de restauração existe
 if (!(Test-Path -Path $localRestoreDir)) {
@@ -53,7 +72,7 @@ WITH NORECOVERY
 
         # Executar a restauração no SQL Server
         Invoke-Sqlcmd -Query $restoreQuery -ServerInstance $instanceName -QueryTimeout 600
-        Write-Host "Restauração do ${restoreType} concluída com sucesso."
+        Write-Host "Restauracao do ${restoreType} concluída com sucesso."
 
     } catch {
         Write-Host "Erro ao restaurar o ${restoreType}: $($_.Exception.Message)"
@@ -72,7 +91,7 @@ try {
 }
 
 # Restaurar o backup completo mais recente
-$fullBackup = Get-ChildItem -Path $localRestoreDir -Filter "*Full*.bak" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$fullBackup = Get-ChildItem -Path $localRestoreDir -Filter "*$databaseName*Full*.bak" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 if ($null -eq $fullBackup) {
     Write-Host "Erro: Nenhum backup completo encontrado no diretório $localRestoreDir"
     exit
@@ -80,7 +99,7 @@ if ($null -eq $fullBackup) {
 Restore-Backup -backupPath $fullBackup.FullName -databaseName $databaseName -instanceName $instanceName -restoreType "backup completo"
 
 # Restaurar o backup diferencial mais recente, se disponível
-$differentialBackup = Get-ChildItem -Path $localRestoreDir -Filter "*Diff*.bak" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+$differentialBackup = Get-ChildItem -Path $localRestoreDir -Filter "*$databaseName*Diff*.bak" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 if ($null -ne $differentialBackup) {
     try {
         Restore-Backup -backupPath $differentialBackup.FullName -databaseName $databaseName -instanceName $instanceName -restoreType "backup diferencial"
@@ -93,7 +112,7 @@ if ($null -ne $differentialBackup) {
 }
 
 # Aplicar backups de log na ordem correta
-$logBackups = Get-ChildItem -Path $localRestoreDir -Filter "*Log*.trn" | Sort-Object LastWriteTime
+$logBackups = Get-ChildItem -Path $localRestoreDir -Filter "*$databaseName*Log*.trn" | Sort-Object LastWriteTime
 if ($logBackups.Count -eq 0) {
     Write-Host "Nenhum backup de log encontrado. Finalizando a restauração do banco de dados."
     Restore-Backup -backupPath $fullBackup.FullName -databaseName $databaseName -instanceName $instanceName -restoreType "finalização do backup" -withRecovery $true
@@ -115,4 +134,4 @@ foreach ($logBackup in $logBackups) {
     }
 }
 
-Write-Host "Restauração do banco de dados $databaseName concluída com sucesso."
+Write-Host "Restauracao do banco de dados $databaseName concluída com sucesso."
