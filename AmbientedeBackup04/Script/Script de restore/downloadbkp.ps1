@@ -1,8 +1,5 @@
-# Definir parâmetros para o S3 e local
+# Definir parâmetros gerais para o S3 e local
 $s3Bucket = "sql-server-bkp-ep"                               # Nome do bucket do S3
-$s3FullPath = "s3://$s3Bucket/applogs/Full/"                  # Caminho no S3 para backups completos
-$s3DiffPath = "s3://$s3Bucket/applogs/Diferencial/"           # Caminho no S3 para backups diferenciais
-$s3LogPath = "s3://$s3Bucket/applogs/Log/"                    # Caminho no S3 para backups de log
 $localRestoreDir = "C:\AmbientedeBackup04\restore"            # Diretório local para salvar os backups
 $awsCliPath = "aws"                                           # Caminho para o AWS CLI (assumindo que está no PATH)
 
@@ -10,6 +7,31 @@ $awsCliPath = "aws"                                           # Caminho para o A
 if (!(Test-Path -Path $localRestoreDir)) {
     New-Item -Path $localRestoreDir -ItemType Directory
 }
+
+# Lista de bancos de dados disponíveis
+$bancosDados = @("AdventureWorks2022", "applogs", "hades", "matricula")
+
+# Perguntar ao usuário qual banco de dados ele deseja baixar
+Write-Host "Escolha um banco de dados para baixar o backup:"
+for ($i = 0; $i -lt $bancosDados.Count; $i++) {
+    Write-Host "$($i+1). $($bancosDados[$i])"
+}
+
+$escolha = Read-Host "Digite o numero correspondente ao banco de dados"
+
+# Validar escolha do usuário
+if ($escolha -lt 1 -or $escolha -gt $bancosDados.Count) {
+    Write-Host "Escolha inválida. Saindo..."
+    exit
+}
+
+$bancoSelecionado = $bancosDados[$escolha - 1]
+Write-Host "Banco de dados selecionado: $bancoSelecionado"
+
+# Definir os caminhos S3 baseados no banco de dados selecionado
+$s3FullPath = "s3://$s3Bucket/$bancoSelecionado/Full/"                  # Caminho no S3 para backups completos
+$s3DiffPath = "s3://$s3Bucket/$bancoSelecionado/Diferencial/"           # Caminho no S3 para backups diferenciais
+$s3LogPath = "s3://$s3Bucket/$bancoSelecionado/Log/"                    # Caminho no S3 para backups de log
 
 # Função para baixar o arquivo mais recente de uma pasta S3
 function Download-LatestBackup {
@@ -48,7 +70,7 @@ function Download-LatestBackup {
     $localFilePath = Join-Path -Path $localDestDir -ChildPath $localFileName
 
     # Baixar o arquivo mais recente
-    Write-Host "Baixando o arquivo mais recente ($latestFileName) de $s3FilePath para $localDestDir..."
+    Write-Host "Baixando o arquivo mais recente ($localFileName) de $s3FilePath para $localDestDir..."
     $downloadCmd = "$awsCliPath s3 cp `"$s3FilePath`" `"$localFilePath`""
     Invoke-Expression $downloadCmd
 
